@@ -17,7 +17,9 @@ var (
 	ErrInvalidUsername   = errors.New("username must be at least 6 characters")
 	ErrInvalidPassword   = errors.New("password must be at least 10 characters and include uppercase, lowercase, digit, and special character")
 	ErrPasswordMismatch  = errors.New("passwords do not match")
-	ErrInvalidEmail      = errors.New("invalid email address")
+	ErrInvalidEmail       = errors.New("invalid email address")
+	ErrAccountNotFound    = errors.New("username or email does not exist")
+	ErrWrongPassword      = errors.New("invalid password")
 	ErrInvalidCredentials = errors.New("invalid username/email or password")
 )
 

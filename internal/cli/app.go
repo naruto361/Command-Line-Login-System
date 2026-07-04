@@ -272,11 +272,7 @@ func (a *App) handleLogin(rl *readline.Instance) {
 	}
 
 	if user == nil {
-		if _, err := readPassword(rl, "Password: "); err != nil {
-			fmt.Printf("Error: %v\n", err)
-			return
-		}
-		fmt.Printf("Error: %v\n", auth.ErrInvalidCredentials)
+		fmt.Printf("Error: %v\n", auth.ErrAccountNotFound)
 		return
 	}
 
@@ -305,7 +301,7 @@ func (a *App) handleLogin(rl *readline.Instance) {
 			fmt.Println("Use 'help' to see the reset-password command.")
 			return
 		}
-		if errors.Is(err, auth.ErrInvalidCredentials) {
+		if errors.Is(err, auth.ErrWrongPassword) {
 			fmt.Printf("Error: %v\n", err)
 			continue
 		}
@@ -521,25 +517,25 @@ func (a *App) displayUserInfo(user *store.User) {
 	fmt.Println("\n--- User Details ---")
 	fmt.Printf("Username:          %s\n", user.Username)
 	fmt.Printf("Email:             %s\n", user.Email)
-	fmt.Printf("Registration date: %s\n", user.RegisteredAt.UTC().Format(time.RFC3339))
+	fmt.Printf("Registration date: %s\n", formatIST(user.RegisteredAt))
 	if user.MFAEnabled {
 		fmt.Println("MFA status:        enabled")
 	} else {
 		fmt.Println("MFA status:        disabled")
 	}
 	if user.LastLogin != nil {
-		fmt.Printf("Last login:        %s\n", user.LastLogin.UTC().Format(time.RFC3339))
+		fmt.Printf("Last login:        %s\n", formatIST(*user.LastLogin))
 	} else {
 		fmt.Println("Last login:        N/A")
 	}
 	if s := a.sess.Current(); s != nil {
-		fmt.Printf("Session expires at: %s\n", s.ExpiresAt.UTC().Format(time.RFC3339))
+		fmt.Printf("Session expires at: %s\n", formatIST(s.ExpiresAt))
 	}
 }
 
 func (a *App) onSessionWarn(expiresAt time.Time) {
 	fmt.Printf("\n[WARNING] Your session will expire at %s (in less than 5 minutes). Activity will extend your session.\n",
-		expiresAt.UTC().Format(time.RFC3339))
+		formatIST(expiresAt))
 }
 
 func (a *App) onSessionExpire() {

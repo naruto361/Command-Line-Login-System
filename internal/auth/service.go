@@ -137,7 +137,7 @@ func (svc *Service) VerifyCredentials(identifier, password string) (*store.User,
 		return nil, fmt.Errorf("lookup user: %w", err)
 	}
 	if user == nil {
-		return nil, ErrInvalidCredentials
+		return nil, ErrAccountNotFound
 	}
 	return svc.verifyPassword(user, password)
 }
@@ -148,7 +148,7 @@ func (svc *Service) VerifyPassword(user *store.User, password string) (*store.Us
 		return nil, fmt.Errorf("lookup user: %w", err)
 	}
 	if fresh == nil {
-		return nil, ErrInvalidCredentials
+		return nil, ErrAccountNotFound
 	}
 	return svc.verifyPassword(fresh, password)
 }
@@ -171,7 +171,7 @@ func (svc *Service) verifyPassword(user *store.User, password string) (*store.Us
 			return nil, ErrAccountLocked
 		}
 		remaining := svc.cfg.MaxFailedLoginAttempts - attempts
-		return nil, fmt.Errorf("%w (%d attempt(s) remaining before lockout)", ErrInvalidCredentials, remaining)
+		return nil, fmt.Errorf("%w (%d attempt(s) remaining before lockout)", ErrWrongPassword, remaining)
 	}
 
 	return user, nil
@@ -247,7 +247,7 @@ func (svc *Service) DisableMFA(userID int64, password, totpCode string) error {
 		return ErrMFANotEnabled
 	}
 	if !CheckPassword(user.PasswordHash, password) {
-		return ErrInvalidCredentials
+		return ErrWrongPassword
 	}
 	if err := svc.VerifyTOTP(user, totpCode); err != nil {
 		return err

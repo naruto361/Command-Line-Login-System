@@ -1,6 +1,7 @@
 package auth_test
 
 import (
+	"errors"
 	"path/filepath"
 	"testing"
 	"time"
@@ -79,6 +80,27 @@ func TestLoginWithEmail(t *testing.T) {
 	_, err := svc.VerifyCredentials("test@example.com", "SecurePass1!")
 	if err != nil {
 		t.Fatalf("login with email: %v", err)
+	}
+}
+
+func TestLoginUnknownUser(t *testing.T) {
+	svc, s := testService(t, 5)
+	defer s.Close()
+
+	_, err := svc.VerifyCredentials("nobody", "anypassword")
+	if !errors.Is(err, auth.ErrAccountNotFound) {
+		t.Fatalf("expected account not found, got %v", err)
+	}
+}
+
+func TestWrongPasswordMessage(t *testing.T) {
+	svc, s := testService(t, 5)
+	defer s.Close()
+	registerUser(t, svc)
+
+	_, err := svc.VerifyCredentials("testuser", "short")
+	if !errors.Is(err, auth.ErrWrongPassword) {
+		t.Fatalf("expected wrong password error, got %v", err)
 	}
 }
 
