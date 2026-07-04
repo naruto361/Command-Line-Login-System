@@ -336,13 +336,20 @@ func (a *App) handleLogin(rl *readline.Instance) {
 		}
 	}
 
+	var previousLastLogin *time.Time
+	if user.LastLogin != nil {
+		t := *user.LastLogin
+		previousLastLogin = &t
+	}
+
 	user, err = a.authSvc.CompleteLogin(user)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}
 
-	a.sess.Login(user)
+	// PreviousLastLogin is the timestamp from before this successful login (nil on first login).
+	a.sess.Login(user, previousLastLogin)
 	a.disableResetPassword()
 	fmt.Println("\nSuccess: logged in.")
 	a.displayUserInfo(user)
@@ -523,14 +530,23 @@ func (a *App) displayUserInfo(user *store.User) {
 	} else {
 		fmt.Println("MFA status:        disabled")
 	}
-	if user.LastLogin != nil {
-		fmt.Printf("Last login:        %s\n", formatIST(*user.LastLogin))
+	if prev := a.previousLastLoginForDisplay(); prev != nil {
+		fmt.Printf("Last login:        %s\n", formatIST(*prev))
 	} else {
 		fmt.Println("Last login:        N/A")
 	}
 	if s := a.sess.Current(); s != nil {
 		fmt.Printf("Session expires at: %s\n", formatIST(s.ExpiresAt))
 	}
+}
+
+// previousLastLoginForDisplay returns the login time from the session before the current one.
+func (a *App) previousLastLoginForDisplay() *time.Time {
+	s := a.sess.Current()
+	if s == nil {
+		return nil
+	}
+	return s.PreviousLastLogin
 }
 
 func (a *App) onSessionWarn(expiresAt time.Time) {

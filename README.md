@@ -153,10 +153,12 @@ docker compose build
 After a successful login, user details are displayed automatically:
 
 - Username
-- Registration date
+- Registration date *(IST)*
 - MFA status (enabled/disabled)
-- Last login time
-- Session expiration time
+- Last login time *(IST)* — shows the **previous** successful login, not the current one (`N/A` on first login)
+- Session expiration time *(IST)*
+
+> **Note — Last login:** The database stores the most recent login timestamp. The CLI displays the login *before* that, so each session shows when you last signed in prior to this one. `whoami` uses the same value for the current session.
 
 ---
 

@@ -10,8 +10,9 @@ import (
 )
 
 type Session struct {
-	User      *store.User
-	ExpiresAt time.Time
+	User              *store.User
+	ExpiresAt         time.Time
+	PreviousLastLogin *time.Time // login time from the session before this one
 }
 
 type Manager struct {
@@ -37,13 +38,20 @@ func (m *Manager) SetCallbacks(onWarn func(time.Time), onExpire func()) {
 	m.onExpire = onExpire
 }
 
-func (m *Manager) Login(user *store.User) {
+func (m *Manager) Login(user *store.User, previousLastLogin *time.Time) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	var prevCopy *time.Time
+	if previousLastLogin != nil {
+		t := *previousLastLogin
+		prevCopy = &t
+	}
+
 	m.session = &Session{
-		User:      user,
-		ExpiresAt: time.Now().UTC().Add(m.timeout),
+		User:              user,
+		ExpiresAt:         time.Now().UTC().Add(m.timeout),
+		PreviousLastLogin: prevCopy,
 	}
 	m.restartWatcher()
 }
