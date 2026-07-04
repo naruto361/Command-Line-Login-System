@@ -33,6 +33,7 @@ func (a *App) Run() {
 
 	fmt.Printf("Welcome to OSTO — secure CLI authentication\nType 'help' for available commands.\n\n")
 
+	// readline provides tab completion and in-memory command history.
 	rl, err := readline.NewEx(&readline.Config{
 		Prompt:          "osto> ",
 		AutoComplete:    &commandCompleter{app: a},
@@ -257,6 +258,7 @@ func (a *App) handleLogin(rl *readline.Instance) {
 	fmt.Println("\n--- Login ---")
 	defer restorePrompt(rl)
 
+	// Username/email is collected once; only the password is re-prompted on failure.
 	identifier, err := readLine(rl, "Username or email: ")
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)

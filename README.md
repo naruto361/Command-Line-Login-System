@@ -2,12 +2,14 @@
 
 A Dockerized Go CLI application with SQLite persistence, bcrypt password hashing, account lockout, email-based password reset, optional Google Authenticator (TOTP) MFA, and session management.
 
+**Repository:** [github.com/naruto361/Command-Line-Login-System](https://github.com/naruto361/Command-Line-Login-System)
+
 ## Features
 
 - **Registration** — username (min 6 chars), email, password (min 10 chars with upper, lower, digit, special)
 - **Login** — username or email + password; optional TOTP step when MFA is enabled
 - **Account lockout** — configurable failed attempt limit (default 5); unlock via password reset
-- **Password reset** — email token flow for locked accounts
+- **Password reset** — email token flow for locked accounts (token printed in DEV_MODE)
 - **MFA** — enable/disable Google Authenticator (QR code + manual secret)
 - **Session** — configurable timeout (default 30 min), 5-minute expiry warning, auto-logout
 - **Interactive CLI** — tab completion, in-memory history, masked password input
@@ -15,37 +17,88 @@ A Dockerized Go CLI application with SQLite persistence, bcrypt password hashing
 ## Prerequisites
 
 - [Go](https://go.dev/dl/) 1.22+
-- [Docker](https://docs.docker.com/get-docker/) & Docker Compose
+- [Docker Desktop](https://docs.docker.com/get-docker/) & Docker Compose (for containerized run)
 
-## Quick Start (Docker)
+---
+
+## Quick Start — Clone & Run
+
+### 1. Clone the repository
 
 ```bash
-# Build and start the interactive CLI
-docker compose run --rm osto
-
-# Or using Make
-make docker-run
+git clone https://github.com/naruto361/Command-Line-Login-System.git
+cd Command-Line-Login-System
 ```
 
-The SQLite database is stored at `/app/data/app.db` inside a **named Docker volume** (`osto_data`), so data persists across container restarts.
+### 2. Run with Docker (recommended for submission demo)
 
-## Local Development
+Start **Docker Desktop**, then in a terminal (PowerShell, Windows Terminal, or bash):
 
 ```bash
-# Install dependencies
+docker compose build
+docker compose run --rm -it osto
+```
+
+> **Important:** Use the `-it` flags so the interactive CLI stays open and accepts input.
+
+The SQLite database is stored at `/app/data/app.db` inside a **named Docker volume** (`osto_data`), so data persists across container restarts. No database file is committed to the repository — tables are created automatically on first run.
+
+### 3. Run locally with Go (alternative)
+
+**Windows (PowerShell):**
+
+```powershell
 go mod tidy
-
-# Run tests
-make test
-
-# Build and run locally (uses ./data/app.db)
-set DATABASE_PATH=./data/app.db
-make run
+$env:DATABASE_PATH = ".\data\app.db"
+go run .\cmd\cli
 ```
+
+**Mac / Linux:**
+
+```bash
+go mod tidy
+export DATABASE_PATH=./data/app.db
+go run ./cmd/cli
+```
+
+You should see:
+
+```text
+Welcome to OSTO — secure CLI authentication
+osto>
+```
+
+---
+
+## Example test flow
+
+```text
+osto> register
+# Username: alice1
+# Email: alice@example.com
+# Password: SecurePass1!
+
+osto> login
+# Username or email: alice1
+# Password: SecurePass1!
+
+osto> whoami
+osto> enable-2fa
+# Scan QR code, enter 6-digit TOTP code
+
+osto> logout
+osto> login
+# Enter password + TOTP code
+
+osto> help
+osto> exit
+```
+
+---
 
 ## Configuration
 
-All settings are driven by environment variables (see `.env.example`):
+All settings are driven by environment variables in **`docker-compose.yml`** (see also `.env.example`):
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -55,8 +108,22 @@ All settings are driven by environment variables (see `.env.example`):
 | `SESSION_TIMEOUT_MINUTES` | `30` | Session duration |
 | `SESSION_WARNING_MINUTES` | `5` | Warn before session expiry |
 | `PASSWORD_RESET_TOKEN_EXPIRY_MINUTES` | `60` | Reset token lifetime |
-| `DEV_MODE` | `true` | Print reset tokens to console (no SMTP) |
+| `DEV_MODE` | `true` | Print reset tokens to console (no SMTP needed) |
 | `APP_NAME` | `OSTO` | Shown in TOTP issuer / emails |
+
+Config-only changes do **not** require a Docker rebuild — restart the container:
+
+```bash
+docker compose run --rm -it osto
+```
+
+Rebuild is required only when **Go source code** or the **Dockerfile** changes:
+
+```bash
+docker compose build
+```
+
+---
 
 ## CLI Commands
 
@@ -65,8 +132,8 @@ All settings are driven by environment variables (see `.env.example`):
 | Command | Description |
 |---------|-------------|
 | `register` | Create a new account |
-| `login` | Sign in with username/email and password |
-| `reset-password` | Reset password to unlock a locked account |
+| `login` | Sign in with username/email and password (+ TOTP if MFA enabled) |
+| `reset-password` | Unlock a locked account *(appears in help only after lockout)* |
 | `help` | List available commands |
 | `exit` | Quit |
 
@@ -74,43 +141,36 @@ All settings are driven by environment variables (see `.env.example`):
 
 | Command | Description |
 |---------|-------------|
-| `whoami` | Show user details and session expiry |
-| `enable-2fa` | Enable Google Authenticator MFA |
-| `disable-2fa` | Disable MFA (requires password + TOTP) |
+| `whoami` | Show current user details and session expiry |
+| `enable-2fa` | Enable Google Authenticator MFA *(shown only when MFA is disabled)* |
+| `disable-2fa` | Disable MFA *(shown only when MFA is enabled; requires password + TOTP)* |
 | `logout` | End session |
 | `help` | List available commands |
 | `exit` | Quit |
 
-## Example Session
+After a successful login, user details are displayed automatically:
 
+- Username
+- Registration date
+- MFA status (enabled/disabled)
+- Last login time
+- Session expiration time
+
+---
+
+## Run tests
+
+```bash
+go test ./... -count=1
 ```
-osto> register
-Username (min 6 characters): alice1
-Email: alice@example.com
-Password: **********
-Confirm password: **********
-Success: account created for 'alice1' (alice@example.com).
 
-osto> login
-Username or email: alice1
-Password: **********
-Success: logged in.
+Or with Make (Git Bash / Mac / Linux):
 
---- User Details ---
-Username:          alice1
-Email:             alice@example.com
-Registration date: 2026-07-04T10:00:00Z
-MFA status:        disabled
-Last login:        2026-07-04T10:05:00Z
-Session expires:   2026-07-04T10:35:00Z
-
-osto> enable-2fa
-Success: MFA enabled.
-(scan QR code or use manual secret)
-
-osto> logout
-Success: logged out.
+```bash
+make test
 ```
+
+---
 
 ## Project Structure
 
@@ -118,18 +178,20 @@ Success: logged out.
 .
 ├── cmd/cli/main.go           # Application entrypoint
 ├── internal/
-│   ├── auth/                 # Registration, login, lockout, reset
+│   ├── auth/                 # Registration, login, lockout, password reset
 │   ├── cli/                  # Interactive REPL and commands
 │   ├── config/               # Environment-based configuration
 │   ├── email/                # SMTP / dev-mode email sender
 │   ├── mfa/                  # TOTP generation and validation
 │   ├── session/              # In-memory session management
-│   └── store/                # SQLite repository + schema
+│   └── store/                # SQLite repository + schema.sql
 ├── Dockerfile
 ├── docker-compose.yml
 ├── Makefile
 └── README.md
 ```
+
+---
 
 ## Security Notes
 
@@ -138,8 +200,10 @@ Success: logged out.
 - Account lockout requires **password reset** — there is no timed auto-unlock.
 - Failed login attempts reset to zero on successful login.
 - Password reset tokens are cryptographically random and time-limited.
-- Generic error messages prevent user enumeration where practical.
-- No secrets, database files, or `.env` files are committed to the repository.
+- Generic error messages reduce user enumeration where practical.
+- No secrets, database files (`.db`), or `.env` files are committed to the repository.
+
+---
 
 ## Make Targets
 
@@ -147,10 +211,21 @@ Success: logged out.
 make build        # Build binary to bin/osto
 make test         # Run all unit tests
 make docker-build # Build Docker image
-make docker-run   # Run interactive CLI in Docker
+make docker-run   # Run interactive CLI in Docker (-it)
 make docker-down  # Stop and remove containers
 make tidy         # go mod tidy
 ```
+
+---
+
+## Submission
+
+This project fulfills the **Containerized CLI Login System with Optional 2FA** assignment:
+
+- Go CLI with registration, login, MFA, lockout, and session management
+- Docker + SQLite with persistent named volume
+- Unit tests for core authentication flows
+- Public repository: **https://github.com/naruto361/Command-Line-Login-System**
 
 ## License
 

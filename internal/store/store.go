@@ -18,6 +18,7 @@ type Store struct {
 	db *sql.DB
 }
 
+// Open creates the database directory, opens SQLite, and applies schema.sql on first run.
 func Open(path string) (*Store, error) {
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0o755); err != nil {

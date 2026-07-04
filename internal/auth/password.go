@@ -1,3 +1,5 @@
+// Password validation and bcrypt hashing helpers.
+// bcrypt is one-way: hashes cannot be reversed to recover the original password.
 package auth
 
 import (

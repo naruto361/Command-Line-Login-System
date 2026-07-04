@@ -1,3 +1,4 @@
+// Package main wires configuration, persistence, and the interactive CLI.
 package main
 
 import (
@@ -13,12 +14,14 @@ import (
 )
 
 func main() {
+	// Load runtime settings from environment variables (see docker-compose.yml).
 	cfg, err := config.Load()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "configuration error: %v\n", err)
 		os.Exit(1)
 	}
 
+	// Open SQLite and apply embedded schema on first run.
 	db, err := store.Open(cfg.DatabasePath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "database error: %v\n", err)
@@ -28,6 +31,7 @@ func main() {
 
 	mailer := email.NewSender(cfg)
 	authSvc := auth.NewService(db, cfg, mailer)
+	// Sessions live in memory only — suitable for a single interactive CLI process.
 	sess := session.NewManager(cfg.SessionTimeout, cfg.SessionWarningBefore)
 	app := cli.NewApp(authSvc, sess)
 

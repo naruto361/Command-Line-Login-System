@@ -1,3 +1,5 @@
+// Package config loads application settings from environment variables.
+// Defaults are defined in docker-compose.yml; nothing security-sensitive is hardcoded.
 package config
 
 import (

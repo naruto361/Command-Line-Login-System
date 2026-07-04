@@ -25,7 +25,7 @@ docker-up:
 	docker compose up --build
 
 docker-run:
-	docker compose run --rm osto
+	docker compose run --rm -it osto
 
 docker-down:
 	docker compose down

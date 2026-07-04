@@ -1,3 +1,5 @@
+// Package session manages the logged-in user and expiry in memory.
+// A background watcher emits a warning before expiry and auto-logout when time is up.
 package session
 
 import (
@@ -78,6 +80,7 @@ func (m *Manager) RefreshUser(user *store.User) {
 	}
 }
 
+// Touch extends the session on user activity (any command while logged in).
 func (m *Manager) Touch() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -129,6 +132,7 @@ func (m *Manager) stopWatcher() {
 	}
 }
 
+// watch runs in a goroutine and notifies the CLI before session expiry.
 func (m *Manager) watch() {
 	stop := m.stopCh
 	warned := false

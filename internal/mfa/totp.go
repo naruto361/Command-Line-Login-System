@@ -1,3 +1,4 @@
+// Package mfa implements Google Authenticator–compatible TOTP (RFC 6238).
 package mfa
 
 import (
@@ -22,6 +23,7 @@ func GenerateSecret(email, issuer string) (secret, url string, err error) {
 	return key.Secret(), key.URL(), nil
 }
 
+// ValidateCode accepts the current 30-second window plus one step before/after (±1 skew).
 func ValidateCode(secret, code string) bool {
 	valid, err := totp.ValidateCustom(code, secret, time.Now().UTC(), totp.ValidateOpts{
 		Period:    30,

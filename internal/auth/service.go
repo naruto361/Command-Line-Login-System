@@ -1,3 +1,5 @@
+// Package auth handles registration, credential verification, account lockout,
+// password reset, and MFA enable/disable orchestration.
 package auth
 
 import (
@@ -78,6 +80,7 @@ func (svc *Service) Register(in RegisterInput) (*store.User, error) {
 		return nil, err
 	}
 
+	// Only the bcrypt hash is persisted; the plaintext password is discarded.
 	user := &store.User{
 		Username:     in.Username,
 		Email:        in.Email,
@@ -150,6 +153,9 @@ func (svc *Service) VerifyPassword(user *store.User, password string) (*store.Us
 	return svc.verifyPassword(fresh, password)
 }
 
+// verifyPassword checks the password and tracks failed attempts.
+// After MaxFailedLoginAttempts consecutive failures the account is locked
+// until the user completes the password-reset flow.
 func (svc *Service) verifyPassword(user *store.User, password string) (*store.User, error) {
 	if user.AccountLocked {
 		return nil, ErrAccountLocked
@@ -173,6 +179,7 @@ func (svc *Service) verifyPassword(user *store.User, password string) (*store.Us
 
 func (svc *Service) CompleteLogin(user *store.User) (*store.User, error) {
 	now := time.Now().UTC()
+	// Successful login clears lockout counters and records last login time.
 	if err := svc.store.ResetFailedLoginAttempts(user.ID); err != nil {
 		return nil, fmt.Errorf("reset failed attempts: %w", err)
 	}
