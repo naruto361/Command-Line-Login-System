@@ -21,14 +21,9 @@ WORKDIR /app
 
 COPY --from=builder /osto /app/osto
 
-ENV DATABASE_PATH=/app/data/app.db \
-    MAX_FAILED_LOGIN_ATTEMPTS=5 \
-    MAX_TOTP_ATTEMPTS=3 \
-    SESSION_TIMEOUT_MINUTES=30 \
-    SESSION_WARNING_MINUTES=5 \
-    PASSWORD_RESET_TOKEN_EXPIRY_MINUTES=60 \
-    DEV_MODE=true \
-    APP_NAME=OSTO
+# Runtime config is set in docker-compose.yml (or via -e flags).
+# Only defaults needed for a plain `docker run` without compose:
+ENV DATABASE_PATH=/app/data/app.db
 
 VOLUME ["/app/data"]
 
