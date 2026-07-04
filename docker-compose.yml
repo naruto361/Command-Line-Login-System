@@ -1,0 +1,27 @@
+services:
+  osto:
+    build: .
+    container_name: osto-cli
+    stdin_open: true
+    tty: true
+    volumes:
+      - osto_data:/app/data
+    environment:
+      DATABASE_PATH: /app/data/app.db
+      MAX_FAILED_LOGIN_ATTEMPTS: "5"
+      MAX_TOTP_ATTEMPTS: "3"
+      SESSION_TIMEOUT_MINUTES: "30"
+      SESSION_WARNING_MINUTES: "5"
+      PASSWORD_RESET_TOKEN_EXPIRY_MINUTES: "60"
+      DEV_MODE: "true"
+      APP_NAME: OSTO
+      # Uncomment and set for production email delivery:
+      # SMTP_HOST: smtp.example.com
+      # SMTP_PORT: "587"
+      # SMTP_USER: user@example.com
+      # SMTP_PASSWORD: secret
+      # SMTP_FROM: noreply@example.com
+      # DEV_MODE: "false"
+
+volumes:
+  osto_data:
