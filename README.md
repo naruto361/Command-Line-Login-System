@@ -174,6 +174,13 @@ Or with Make (Git Bash / Mac / Linux):
 make test
 ```
 
+**Coverage** (`internal/auth`, `internal/mfa`, `internal/session`):
+
+- Registration, login (username/email), wrong password, unknown user
+- Account lockout, failed-attempt reset, password reset unlock
+- MFA enable/disable and TOTP validation
+- Session login/logout, activity refresh (`Touch`), expiry warning, auto-logout, previous last-login display
+
 ---
 
 ## Project Structure
@@ -228,7 +235,7 @@ This project fulfills the **Containerized CLI Login System with Optional 2FA** a
 
 - Go CLI with registration, login, MFA, lockout, and session management
 - Docker + SQLite with persistent named volume
-- Unit tests for core authentication flows
+- Unit tests for core authentication and session flows
 - Public repository: **https://github.com/naruto361/Command-Line-Login-System**
 
 ## License
