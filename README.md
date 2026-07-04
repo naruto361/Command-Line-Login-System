@@ -41,7 +41,9 @@ docker compose run --rm -it osto
 
 > **Important:** Use the `-it` flags so the interactive CLI stays open and accepts input.
 
-The SQLite database is stored at `/app/data/app.db` inside a **named Docker volume** (`osto_data`), so data persists across container restarts. No database file is committed to the repository — tables are created automatically on first run.
+The SQLite database is stored at `/app/data/app.db` inside a **named Docker volume** (`osto_data`), so data persists across container restarts and rebuilds. No database file is committed to the repository — tables are created automatically on first run.
+
+> **Note — Local vs Docker database:** `go run` uses `.\data\app.db` on your machine. Docker uses a separate volume `osto_data`. Users you register locally are **not** visible in Docker (and vice versa) unless you use the same database path. Running `docker compose build` does **not** delete data; only `docker compose down -v` removes the volume.
 
 ### 3. Run locally with Go (alternative)
 
